@@ -5,6 +5,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import Homepage from './components/Homepage/Homepage';
 import Login from './components/Login/Login';
 import Signup from './components/Signup/Signup';
+import Dashboard from './components/Dashboard/Dashboard';
 
 const Stack = createNativeStackNavigator();
 
@@ -19,6 +20,7 @@ export default function App() {
             }} component={Homepage} />
             <Stack.Screen name="Login" component={Login} />
             <Stack.Screen name="Signup" component={Signup} />
+            <Stack.Screen name="Dashboard" component={Dashboard}/>
           </Stack.Navigator>
         </SafeAreaProvider>
       </PaperProvider>

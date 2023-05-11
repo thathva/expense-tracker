@@ -1,15 +1,36 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, ImageBackground   } from 'react-native';
 import { TextInput, Button, Card } from 'react-native-paper';
+import axios from 'axios'
+import Toast from 'react-native-toast-message'
 
 const Login = ({navigation}) => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleLogin = () => {
-    // handle login logic here
+  const handleLogin = async () => {
+    const data = {
+      'username': username,
+      'password': password
+    }
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    };
+    axios.post('http://10.0.0.47:8000/login', data, config).then(response => {
+      if(response.status == 200) {
+        navigation.navigate('Dashboard');
+      }
+    }).catch(err => {
+      Toast.show({
+        type: 'error',
+        text1: 'Some error occured!'
+      });
+    })
+    
   };
-
+ 
   return (
     <ImageBackground source={require('../../assets/Atlas.png')} style={styles.container} resizeMode="cover">
     <View style={styles.container}>
@@ -18,9 +39,9 @@ const Login = ({navigation}) => {
         <Card.Content style={styles.content}>
           <TextInput
             label="Email"
-            value={email}
+            value={username}
             type='outlined'
-            onChangeText={setEmail}
+            onChangeText={name => setUsername(name)}
             autoCapitalize="none"
             keyboardType="email-address"
             style={styles.input}
@@ -28,7 +49,7 @@ const Login = ({navigation}) => {
           <TextInput
             label="Password"
             value={password}
-            onChangeText={setPassword}
+            onChangeText={name => setPassword(name)}
             secureTextEntry
             style={styles.input}
           />
