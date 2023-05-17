@@ -20,8 +20,27 @@ const (
 )
 
 type User struct {
+	Id       int
 	Username string `json:"username"`
 	Password string `json:"password"`
+}
+
+type ExpenseType int
+
+const (
+	Credit ExpenseType = iota
+	Debit
+)
+
+type Expense struct {
+	User     User
+	Name     string      `json:"expensename"`
+	Year     int         `json:"year"`
+	Month    int         `json:"month"`
+	Day      int         `json:"day"`
+	Category string      `json:"category"`
+	Amount   float32     `json:"amount"`
+	Type     ExpenseType `json:"expensetype"`
 }
 
 func setupDB() *sql.DB {
@@ -110,6 +129,80 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func Create(w http.ResponseWriter, r *http.Request) {
+	var expense Expense
+	err := json.NewDecoder(r.Body).Decode(&expense)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	db := setupDB()
+	defer db.Close()
+	var user User
+	err = db.QueryRow("SELECT id FROM users WHERE id = $1", expense.User.Id).Scan(&user.Id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	_, err = db.Exec("INSERT INTO expenses (name, year, month, day, category, amount, type, userid) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+		expense.Name, expense.Year, expense.Month, expense.Day, expense.Category, expense.Amount, int(expense.Type), user.Id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func View(w http.ResponseWriter, r *http.Request) {
+	var expense Expense
+	err := json.NewDecoder(r.Body).Decode(&expense)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	db := setupDB()
+	defer db.Close()
+
+	rows, err := db.Query("SELECT name, category, amount, year, month, day, type FROM expenses WHERE userid = $1", expense.User.Id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	var expenses []Expense
+	for rows.Next() {
+		var expense Expense
+		err := rows.Scan(&expense.Name, &expense.Category, &expense.Amount, &expense.Year, &expense.Month, &expense.Day, &expense.Type)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		expenses = append(expenses, expense)
+	}
+
+	if err = rows.Err(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Convert expenses to JSON
+	jsonData, err := json.Marshal(expenses)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Set the appropriate HTTP headers
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	// Write the JSON response
+	w.Write(jsonData)
+}
+
 func main() {
 	router := mux.NewRouter()
 
@@ -118,6 +211,10 @@ func main() {
 	router.HandleFunc("/login", Login).Methods("POST")
 
 	router.HandleFunc("/register", Register).Methods("POST")
+
+	router.HandleFunc("/create", Create).Methods("POST")
+
+	router.HandleFunc("/view", View).Methods("GET")
 
 	// serve the app
 	fmt.Println("Server at 8000")
