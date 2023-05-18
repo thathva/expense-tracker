@@ -9,6 +9,7 @@ const Login = ({navigation}) => {
   const [password, setPassword] = useState('');
 
   const handleLogin = async () => {
+    navigation.navigate('Dashboard');
     const data = {
       'username': username,
       'password': password

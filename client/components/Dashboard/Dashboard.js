@@ -36,6 +36,7 @@ const Dashboard = ({ navigation }) => {
         </List.Section>
         <View style={styles.buttonContainer}>
           <Button
+            icon="plus"
             mode="contained"
             style={styles.button}
             onPress={() => navigation.navigate('CreateExpense')}
@@ -43,6 +44,7 @@ const Dashboard = ({ navigation }) => {
             Add an Expense
           </Button>
           <Button
+            icon="view-agenda"
             mode="contained"
             style={styles.button}
             onPress={() => navigation.navigate('ViewExpense')}
