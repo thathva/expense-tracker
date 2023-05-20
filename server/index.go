@@ -34,6 +34,7 @@ const (
 
 type Expense struct {
 	User     User
+	Id       int         `json:"id"`
 	Name     string      `json:"expensename"`
 	Year     int         `json:"year"`
 	Month    int         `json:"month"`
@@ -156,17 +157,13 @@ func Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func View(w http.ResponseWriter, r *http.Request) {
-	var expense Expense
-	err := json.NewDecoder(r.Body).Decode(&expense)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	userId := r.URL.Query().Get("userId")
 	db := setupDB()
 	defer db.Close()
 
-	rows, err := db.Query("SELECT name, category, amount, year, month, day, type FROM expenses WHERE userid = $1", expense.User.Id)
+	rows, err := db.Query("SELECT name, category, amount, year, month, day, type FROM expenses WHERE userid = $1", userId)
 	if err != nil {
+		fmt.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -175,8 +172,9 @@ func View(w http.ResponseWriter, r *http.Request) {
 	var expenses []Expense
 	for rows.Next() {
 		var expense Expense
-		err := rows.Scan(&expense.Name, &expense.Category, &expense.Amount, &expense.Year, &expense.Month, &expense.Day, &expense.Type)
+		err := rows.Scan(&expense.Id, &expense.Name, &expense.Category, &expense.Amount, &expense.Year, &expense.Month, &expense.Day, &expense.Type)
 		if err != nil {
+			fmt.Println(err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -184,6 +182,7 @@ func View(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = rows.Err(); err != nil {
+		fmt.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -191,6 +190,7 @@ func View(w http.ResponseWriter, r *http.Request) {
 	// Convert expenses to JSON
 	jsonData, err := json.Marshal(expenses)
 	if err != nil {
+		fmt.Println(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

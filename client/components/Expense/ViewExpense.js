@@ -1,15 +1,28 @@
 import * as React from 'react';
 import { List } from 'react-native-paper';
 import { StyleSheet, View, ImageBackground } from 'react-native';
+import axios from 'axios'
 
 const ViewExpense = () => {
-    const transactions = [
-        { id: 1, description: 'Transaction 1', amount: '$10.00' },
-        { id: 2, description: 'Transaction 2', amount: '$20.00' },
-        { id: 3, description: 'Transaction 3', amount: '$30.00' },
-        { id: 4, description: 'Transaction 4', amount: '$40.00' },
-        { id: 5, description: 'Transaction 5', amount: '$50.00' },
-    ];
+    const [transactions, setTransactions] = React.useState([])
+
+    React.useEffect(() => {
+        const config = {
+          method: 'get',
+          url: 'http://192.168.0.47:8000/view?userId=1',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        };
+      
+        axios.request(config)
+          .then((response) => {
+            setTransactions(response.data)
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+      }, []);
 
     return (
         <ImageBackground
@@ -22,7 +35,7 @@ const ViewExpense = () => {
                     {transactions.map((transaction) => (
                         <List.Item
                             key={transaction.id}
-                            title={transaction.description}
+                            title={transaction.expensename}
                             description={transaction.amount}
                             left={(props) => <List.Icon {...props} icon="currency-usd" />}
                         />
