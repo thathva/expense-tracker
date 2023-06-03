@@ -3,7 +3,7 @@ import { List } from 'react-native-paper';
 import { StyleSheet, View, ImageBackground } from 'react-native';
 import axios from 'axios'
 
-const ViewExpense = () => {
+const ViewExpense = ({navigation, mode}) => {
     const [transactions, setTransactions] = React.useState([])
 
     React.useEffect(() => {
@@ -24,6 +24,31 @@ const ViewExpense = () => {
           });
       }, []);
 
+    const deleteOrUpdate = (transaction) => {
+        if (mode === 'delete') {
+          return (
+            <List.Icon
+              icon="delete"
+              onPress={() => handleDelete(transaction.id)}
+            />
+          );
+        } else {
+            const transactionId = transaction.id
+            const update = "update"
+          return (
+            <List.Icon
+             icon="edit"
+             onPress={navigation.navigate('CreateExpense', { transactionId, update })}
+            />
+          )
+        }
+    };
+
+    const handleDelete = (id) => {
+        //delete
+    }
+
+ 
     return (
         <ImageBackground
             source={require('../../assets/Atlas.png')}
@@ -38,6 +63,7 @@ const ViewExpense = () => {
                             title={transaction.expensename}
                             description={transaction.amount}
                             left={(props) => <List.Icon {...props} icon="currency-usd" />}
+                            right={() => deleteOrUpdate(transaction)}
                         />
                     ))}
                 </List.Section>

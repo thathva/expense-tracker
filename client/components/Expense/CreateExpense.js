@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, View, ImageBackground, Text } from 'react-native';
 import { TextInput, Button, RadioButton } from 'react-native-paper';
 
-const CreateExpense = () => {
+const CreateExpense = ({transactionId, update}) => {
   const [checked, setChecked] = React.useState('Credit');
   return (
     <ImageBackground

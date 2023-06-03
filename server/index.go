@@ -156,6 +156,48 @@ func Create(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func Update(w http.ResponseWriter, r *http.Request) {
+	var expense Expense
+	err := json.NewDecoder(r.Body).Decode(&expense)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	db := setupDB()
+	defer db.Close()
+	var user User
+	err = db.QueryRow("SELECT id FROM users WHERE id = $1", expense.User.Id).Scan(&user.Id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	_, err = db.Exec("UPDATE expenses set name = $1, year = $2, month = $3, day = $4, category = $5, amount = $6, type = $7, userid = $8)",
+		expense.Name, expense.Year, expense.Month, expense.Day, expense.Category, expense.Amount, int(expense.Type), user.Id)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func Delete(w http.ResponseWriter, r *http.Request) {
+	userId := r.URL.Query().Get("userId")
+	expenseId := r.URL.Query().Get("expenseId")
+	db := setupDB()
+	defer db.Close()
+
+	_, err := db.Exec("DELETE FROM expenses WHERE userid = $1 and id = $2", userId, expenseId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+
+}
+
 func View(w http.ResponseWriter, r *http.Request) {
 	userId := r.URL.Query().Get("userId")
 	db := setupDB()
@@ -215,6 +257,10 @@ func main() {
 	router.HandleFunc("/create", Create).Methods("POST")
 
 	router.HandleFunc("/view", View).Methods("GET")
+
+	router.HandleFunc("/delete", Delete).Methods("GET")
+
+	router.HandleFunc("/update", Update).Methods("POST")
 
 	// serve the app
 	fmt.Println("Server at 8000")
